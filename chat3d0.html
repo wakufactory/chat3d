@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>chagGPT 3d object </title>
+<script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+<script src="afecomponents.js"></script>
+<script>
+const $ = (id)=>document.getElementById(id)
+onload =function() {
+console.log("Hoge");	
+	const initprompt = "これから指示する3Dオブジェクトの生成をA-Frameのタグのみを使ってしてください。a-sceneを含めないオブジェクトタグのみの回答で解説等は不要です。指定したオブジェクトは原点を中心に5以内の場所に配置してください。javascriptのコードは使用しない。"
+	const messages = [{role:"user",content:initprompt}]
+	$("prompt").addEventListener("change", ev=>{		
+		messages.push({role:"user","content":ev.target.value})
+		chatWithGPT(messages).then(ret=>{
+			console.log(ret)
+			const result = ret.choices[0].message
+			$('base').innerHTML = result.content ;
+			messages.push(result)
+			$('prompt').value=""
+		})
+	})
+}
+function chatWithGPT(message) {
+  const API_URL = "https://api.openai.com/v1/chat/completions";
+
+  // ChatGPTのAPIキー
+  const API_KEY = "<set your api key>";
+
+  // リクエストのヘッダー
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${API_KEY}`,
+  };
+
+  // リクエストボディ
+  const requestBody = {
+  	model:"gpt-3.5-turbo",
+    messages:message,
+//    max_tokens: 500,
+    temperature: 0.7,
+  };
+
+  return new Promise((resolve, reject) => {
+    fetch(API_URL, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(requestBody),
+    })
+      .then((response) => response.json())
+      .then((data) => resolve(data))
+      .catch((error) => reject(error));
+  });
+}
+//scene init component 
+AFRAME.registerComponent('sceneinit', {
+	schema: {
+		query:{type:"array"}
+	},
+	init:function() {
+		console.log("start")
+		console.log(this.data.query)
+		// init code here
+	},
+	tick:function(time,dur) {
+		// called each frame 
+	}
+})
+
+//sample component
+AFRAME.registerComponent('rot', {
+	schema: {
+		speed:{type:"number",default:60},
+		axis:{default:"Y"}
+	},
+	init:function() {
+	  this.rot = {x:0,y:0,z:0}
+	},
+	tick:function(time, timeDelta) {
+		if(this.data.axis=="X") this.rot.x = THREE.MathUtils.degToRad(time/this.data.speed)
+		if(this.data.axis=="Y") this.rot.y = THREE.MathUtils.degToRad(time/this.data.speed)
+		if(this.data.axis=="Z") this.rot.z = THREE.MathUtils.degToRad(time/this.data.speed)
+//		this.el.setAttribute("rotation",this.rot)
+		this.el.object3D.rotation.set(this.rot.x,this.rot.y,this.rot.z)
+	}
+})	
+</script>
+<style>
+#prompt {
+	position:absolute ;
+	width:calc(100% - 2rem) ;
+	top:1rem ;
+	left:1rem ;
+	font-size:2rem; 
+	z-index:10;
+}
+</style>
+</head>
+<body>
+<input id=prompt type=text size=80>
+<a-scene sceneinit>
+<!-- A-frame scene -->
+<a-assets>
+  	<img id="floortex" src="/wxr/assets/img/tex1024.png">
+</a-assets>
+
+<!--sample objects-->
+<a-entity id=base  position="0 5 0" scale="1 1 1" >
+
+</a-entity>
+
+<!--camera-->
+<a-entity id="camrig"  position="0 3 5" vrheight padmoved> 
+	<a-entity id="camera" camera  look-controls wasd-controls="acceleration:10"></a-entity>
+	<!--vr controller-->
+	<a-entity oculus-touch-controls="hand: left; model:false"  padmove="turn:false" exitvr></a-entity>
+	<a-entity oculus-touch-controls="hand: right; model:false" padmove="gripud:true" exitvr></a-entity>
+</a-entity>
+
+<!--lights-->
+<a-entity light="type: ambient; color: #888"></a-entity>
+<a-entity light="type: directional; color: #FFF; intensity: 0.6; castShadow:true;shadowCameraFar:10;shadowCameraNear:0.1;
+shadowCameraBottom:-2;shadowCameraTop:2;shadowCameraLeft:-2;shadowCameraRight:2" position="-1 2 2" shadow ></a-entity>
+
+
+<!--floor-->
+<a-plane noar position="0 -0.001 0" rotation="-90 0 0" width="200" height="200" color="#888" material="shader:standard;src: #floortex;repeat:20 20;" shadow></a-plane>
+<!--sky-->
+<a-sky noar material="shader:flat;color:#66a" radius="100" segments-height="6" segments-width="12"></a-sky>
+	
+</a-scene>
