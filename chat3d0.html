@@ -8,15 +8,18 @@
 <script>
 const $ = (id)=>document.getElementById(id)
 onload =function() {
-console.log("Hoge");	
-	const initprompt = "これから指示する3Dオブジェクトの生成をA-Frameのタグのみを使ってしてください。a-sceneを含めないオブジェクトタグのみの回答で解説等は不要です。指定したオブジェクトは原点を中心に5以内の場所に配置してください。javascriptのコードは使用しない。"
+	const initprompt = 
+		`これから指示する3Dオブジェクトの生成をA-Frameのタグのみを使ってしてください。
+		a-sceneを含めないオブジェクトタグのみの回答で解説等は不要です。
+		指定したオブジェクトは原点を中心に5以内の場所に配置してください。javascriptのコードは使用しない。`
+
 	const messages = [{role:"user",content:initprompt}]
 	$("prompt").addEventListener("change", ev=>{		
 		messages.push({role:"user","content":ev.target.value})
 		chatWithGPT(messages).then(ret=>{
 			console.log(ret)
 			const result = ret.choices[0].message
-			$('base').innerHTML = result.content ;
+			$('base').innerHTML = result.content.replace("<a-scene>","").replace("</a-scene>","") ;
 			messages.push(result)
 			$('prompt').value=""
 		})
@@ -26,7 +29,7 @@ function chatWithGPT(message) {
   const API_URL = "https://api.openai.com/v1/chat/completions";
 
   // ChatGPTのAPIキー
-  const API_KEY = "<set your api key>";
+  const API_KEY = "<your api key>";
 
   // リクエストのヘッダー
   const headers = {
