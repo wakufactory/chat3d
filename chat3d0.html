@@ -10,8 +10,11 @@ const $ = (id)=>document.getElementById(id)
 onload =function() {
 	const initprompt = 
 		`これから指示する3Dオブジェクトの生成をA-Frameのタグのみを使ってしてください。
-		a-sceneを含めないオブジェクトタグのみの回答で解説等は不要です。
-		指定したオブジェクトは原点を中心に5以内の場所に配置してください。javascriptのコードは使用しない。`
+		以下の条件を守ってください
+		・htmlタグやa-sceneタグを含めない
+		・回答にはオブジェクトタグのみで、解説は不要
+		・オブジェクトは原点を中心に5以内の場所に配置する
+		・javascriptは使用しない`
 
 	const messages = [{role:"user",content:initprompt}]
 	$("prompt").addEventListener("change", ev=>{		
@@ -21,7 +24,13 @@ onload =function() {
 			const result = ret.choices[0].message
 			$('base').innerHTML = result.content.replace("<a-scene>","").replace("</a-scene>","") ;
 			messages.push(result)
-			$('prompt').value=""
+//			$('prompt').value=""
+			let log = [] 
+			messages.forEach(m=>{
+				log.push(`${m.role}:${m.content}`)
+			})
+			$('log').value = log.join("\n")
+			$('log').scrollTop = $('log').scrollHeight;
 		})
 	})
 }
@@ -29,7 +38,7 @@ function chatWithGPT(message) {
   const API_URL = "https://api.openai.com/v1/chat/completions";
 
   // ChatGPTのAPIキー
-  const API_KEY = "<your api key>";
+  const API_KEY = "<your api keey>";
 
   // リクエストのヘッダー
   const headers = {
@@ -98,10 +107,21 @@ AFRAME.registerComponent('rot', {
 	font-size:2rem; 
 	z-index:10;
 }
+#log {
+	position:absolute ;
+	top:4rem ;
+	left:1rem ;
+	width:50% ;
+	height:calc(100% - 5rem) ;
+	background-color:#8888 ;
+	color:#000;
+	z-index:10;
+}
 </style>
 </head>
 <body>
 <input id=prompt type=text size=80>
+<textarea id=log readonly></textarea>
 <a-scene sceneinit>
 <!-- A-frame scene -->
 <a-assets>
